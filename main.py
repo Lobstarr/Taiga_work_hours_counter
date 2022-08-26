@@ -213,17 +213,27 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('taiga.ini')
 
+    # Global
     fields_list = set(config['global']['fields'].split(','))
     read_from_files = config['global'].getboolean('read_from_files')
     read_from_links = config['global'].getboolean('read_from_links')
-    filter_user = config['global']['filter_user']
-    not_paid_only = config['global'].getboolean('not_paid_only')
-    with_filled_time_only = config['global'].getboolean('with_filled_time_only')
+
     datetime_input_fmt = config['global']['datetime_input_fmt']
     datetime_output_fmt = config['global']['datetime_output_fmt']
     datetime_timezone = config['global']['datetime_timezone']
-    output_filename = config['global']['output_filename']
 
+    curr_datetime = datetime.now()
+    output_filename = config['global']['output_filename']
+    output_filename = curr_datetime.strftime(output_filename)
+
+    # Filters
+    filter_user = config['filters']['filter_user']
+    not_paid_only = config['filters'].getboolean('not_paid_only')
+    with_filled_time_only = config['filters'].getboolean('with_filled_time_only')
+    closed_only = config['filters'].getboolean('closed_only')
+    closed_statuses_list = set(config['filters']['closed_statuses'].split(','))
+
+    # Files & links
     files = set(config['files'].values())
     links = set(config['links'].values())
 
@@ -243,12 +253,19 @@ if __name__ == '__main__':
 
     if filter_user:
         out = [x for x in out if x.assigned_to == filter_user]
+        output_filename = output_filename + '_' + filter_user
 
     if not_paid_only:
         out = [x for x in out if x.paid != 'True']
+        output_filename = output_filename + '_not-paid'
 
     if with_filled_time_only:
         out = [x for x in out if x.time_spent != '']
+        output_filename = output_filename + '_w-times'
+
+    if closed_only:
+        out = [x for x in out if x.status in closed_statuses_list]
+        output_filename = output_filename + '_closed'
 
     # print(out)
-    export_to_excel(out, output_filename)
+    export_to_excel(out, output_filename + '.xlsx')
