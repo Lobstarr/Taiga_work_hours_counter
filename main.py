@@ -67,6 +67,8 @@ class TaigaTask:
     def get_var_names_len(self):
         return get_array_len(self.get_var_names())
 
+    def convert_time_spent(self):
+        self.time_spent = str(self.time_spent).replace('.', ',')
     def convert_times(self):
         self.created_date = convert_time(self.created_date,
                                          self.datetime_input_fmt, self.datetime_timezone, self.datetime_output_fmt)
@@ -96,6 +98,7 @@ class TaigaTask:
         self.type = 'US'
         self.created_date = self.created_date if True else False
         self.convert_times()
+        self.convert_time_spent()
         return self
 
     def set_task(self, data_arr):
@@ -116,6 +119,7 @@ class TaigaTask:
             = data_arr
         self.type = 'TK'
         self.convert_times()
+        self.convert_time_spent()
         return self
 
     def set_issue(self, data_arr):
@@ -135,6 +139,7 @@ class TaigaTask:
             = data_arr
         self.type = 'IS'
         self.convert_times()
+        self.convert_time_spent()
         return self
 
 
@@ -226,6 +231,8 @@ if __name__ == '__main__':
     output_filename = config['global']['output_filename']
     output_filename = curr_datetime.strftime(output_filename)
 
+    ca_cert = config['global']['ca_cert']
+
     # Filters
     filter_user = config['filters']['filter_user']
     not_paid_only = config['filters'].getboolean('not_paid_only')
@@ -248,7 +255,7 @@ if __name__ == '__main__':
 
     if read_from_links:
         for taiga_file_link in links:
-            resp = requests.get(taiga_file_link)
+            resp = requests.get(taiga_file_link, verify=ca_cert)
             out = [*out, *read_csv_from_link(resp.text)]
 
     if filter_user:
